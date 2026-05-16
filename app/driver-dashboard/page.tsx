@@ -1,8 +1,17 @@
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { Navbar } from '../components/Navbar';
+import { canAccessRole, parseSessionToken } from '../lib/auth-session';
 
 const actions = ['Start Route', 'Student Attendance', 'Navigate Route', 'Emergency Button', 'Trip Completion', 'Fuel Logging'];
 
 export default function DriverDashboard() {
+  const token = cookies().get('mst_session')?.value;
+  const user = parseSessionToken(token);
+  if (!user || !canAccessRole(user.role, ['driver', 'admin'])) {
+    redirect('/login?next=/driver-dashboard');
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <Navbar />

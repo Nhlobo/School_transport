@@ -1,5 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { AuthProvider } from '@/app/components/AuthProvider';
+import { Footer } from '@/app/components/Footer';
 
 export const metadata: Metadata = {
   title: 'Mzansi Scholar Transport',
@@ -9,7 +11,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+          <Footer />
+        </AuthProvider>
+      </body>
     </html>
   );
 }
