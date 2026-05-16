@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Moon, Sun } from 'lucide-react';
 import { useEffect } from 'react';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore } from '../../store/useAppStore';
 
 export function Navbar() {
   const { darkMode, toggleDarkMode } = useAppStore();
