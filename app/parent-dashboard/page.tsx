@@ -1,6 +1,15 @@
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { Navbar } from '../components/Navbar';
+import { canAccessRole, parseSessionToken } from '../lib/auth-session';
 
 export default function ParentDashboard() {
+  const token = cookies().get('mst_session')?.value;
+  const user = parseSessionToken(token);
+  if (!user || !canAccessRole(user.role, ['parent', 'admin'])) {
+    redirect('/login?next=/parent-dashboard');
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <Navbar />
