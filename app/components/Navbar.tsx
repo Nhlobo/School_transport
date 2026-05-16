@@ -1,29 +1,18 @@
-'use client';
-
 import Link from 'next/link';
-import { Moon, Sun } from 'lucide-react';
-import { useEffect } from 'react';
-import { useAppStore } from '../../store/useAppStore';
 
 export function Navbar() {
-  const { darkMode, toggleDarkMode } = useAppStore();
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-  }, [darkMode]);
-
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-8">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-taxiGold">Mzansi Scholar Transport</Link>
-        <nav className="hidden gap-6 text-sm font-medium text-zinc-300 md:flex">
-          <Link href="/parent-dashboard" className="transition hover:text-white">Parents</Link>
-          <Link href="/driver-dashboard" className="transition hover:text-white">Driver</Link>
-          <Link href="/admin" className="transition hover:text-white">Admin</Link>
+        <Link href="/" className="text-base font-semibold tracking-tight text-slate-900 md:text-lg">
+          Mzansi Scholar Transport
+        </Link>
+        <nav className="hidden items-center gap-5 text-sm font-medium text-slate-600 md:flex">
+          <Link href="/" className="hover:text-slate-900">Home</Link>
+          <Link href="/tracking" className="hover:text-slate-900">Live Tracking</Link>
+          <Link href="/parent-dashboard" className="hover:text-slate-900">Parent Portal</Link>
+          <Link href="/driver-dashboard" className="hover:text-slate-900">Driver App</Link>
         </nav>
-        <button className="glass rounded-full p-2" onClick={toggleDarkMode} aria-label="Toggle theme">
-          {darkMode ? <Moon size={16} /> : <Sun size={16} />}
-        </button>
       </div>
     </header>
   );
