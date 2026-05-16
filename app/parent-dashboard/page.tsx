@@ -1,12 +1,12 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Navbar } from '../components/Navbar';
-import { canAccessRole, parseSessionToken } from '../lib/auth-session';
+import { validateCurrentSession } from '../lib/auth-server';
 
-export default function ParentDashboard() {
-  const token = cookies().get('mst_session')?.value;
-  const user = parseSessionToken(token);
-  if (!user || !canAccessRole(user.role, ['parent', 'admin'])) {
+export const dynamic = 'force-dynamic';
+
+export default async function ParentDashboard() {
+  const session = await validateCurrentSession('parent');
+  if (!session) {
     redirect('/login?next=/parent-dashboard');
   }
 

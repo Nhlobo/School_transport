@@ -1,141 +1,154 @@
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
-import { createDefaultUser, createSessionToken, SESSION_COOKIE_NAME, type SessionUser } from '@/app/lib/auth-session';
-import { isValidEmail } from '@/app/lib/validation';
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  loginSchema,
+  registerSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
+  verifyOtpSchema,
+  type LoginInput,
+  type RegisterInput,
+  type RequestPasswordResetInput,
+  type ResetPasswordInput,
+  type VerifyOtpInput
+} from '@/app/lib/validation';
+import {
+  clearAuthCookies,
+  loginUser,
+  logoutUser,
+  refreshUserSession,
+  registerUser,
+  requestPasswordReset,
+  resetPassword,
+  validateCurrentSession,
+  verifyPasswordResetOtp
+} from '@/app/lib/auth-server';
 
-type AuthRequestBody = {
-  email?: string;
-  password?: string;
-  name?: string;
-};
+function assertTrustedOrigin(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const host = request.headers.get('host');
 
-type BackendAuthResponse = {
-  user?: SessionUser;
-};
+  if (!origin || !host) {
+    return;
+  }
 
-type AuthMode = 'login' | 'signup';
+  const normalizedHost = host.toLowerCase();
+  let originHost = '';
+  try {
+    originHost = new URL(origin).host.toLowerCase();
+  } catch {
+    throw new Error('Invalid request origin.');
+  }
 
-function getBackendBaseUrl() {
-  const value = process.env.AUTH_API_BASE_URL || process.env.BACKEND_API_BASE_URL || '';
-  return value.replace(/\/+$/, '');
+  if (originHost !== normalizedHost) {
+    throw new Error('Cross-site request blocked.');
+  }
 }
 
-function validateBody(body: AuthRequestBody, mode: AuthMode) {
-  const errors: string[] = [];
-  const email = body.email?.trim().toLowerCase() || '';
-  const password = body.password || '';
-  const name = body.name?.trim() || '';
-
-  if (!isValidEmail(email)) {
-    errors.push('Please enter a valid email address.');
+async function getJsonBody<T>(request: NextRequest) {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw new Error('Invalid request payload.');
   }
+}
 
-  if (!password || password.length < 8) {
-    errors.push('Password must be at least 8 characters long.');
+function toErrorResponse(error: unknown, status = 400) {
+  const message = error instanceof Error ? error.message : 'Request failed.';
+  return NextResponse.json({ success: false, message }, { status });
+}
+
+export async function handleRegister(request: NextRequest) {
+  try {
+    assertTrustedOrigin(request);
+    const payload = registerSchema.parse(await getJsonBody<RegisterInput>(request));
+    const user = await registerUser(payload);
+    return NextResponse.json({ success: true, message: 'Account created successfully.', user }, { status: 201 });
+  } catch (error) {
+    return toErrorResponse(error, 400);
   }
+}
 
-  if (mode === 'signup' && name.length < 2) {
-    errors.push('Please enter your full name.');
+export async function handleLogin(request: NextRequest) {
+  try {
+    assertTrustedOrigin(request);
+    const payload = loginSchema.parse(await getJsonBody<LoginInput>(request));
+    const user = await loginUser(payload);
+    return NextResponse.json({ success: true, message: 'Login successful.', user });
+  } catch (error) {
+    return toErrorResponse(error, 401);
   }
+}
 
-  return {
-    errors,
-    payload: {
-      email,
-      password,
-      name
+export async function handleLogout(request?: NextRequest) {
+  if (request) {
+    assertTrustedOrigin(request);
+  }
+  await logoutUser();
+  return NextResponse.json({ success: true, message: 'Logged out successfully.' });
+}
+
+export async function handleRefresh(request?: NextRequest) {
+  try {
+    if (request) {
+      assertTrustedOrigin(request);
     }
-  };
+    const user = await refreshUserSession();
+    return NextResponse.json({ success: true, message: 'Session refreshed.', user });
+  } catch (error) {
+    clearAuthCookies();
+    return toErrorResponse(error, 401);
+  }
 }
 
-async function tryBackendAuth(mode: AuthMode, body: AuthRequestBody) {
-  const backendBase = getBackendBaseUrl();
-  if (!backendBase) {
-    return null;
+export async function handleSession(requiredRole?: 'parent' | 'driver') {
+  try {
+    const result = await validateCurrentSession(requiredRole);
+
+    if (!result) {
+      clearAuthCookies();
+      return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+    }
+
+    return NextResponse.json({ authenticated: true, user: result.user });
+  } catch {
+    clearAuthCookies();
+    return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
-
-  const response = await fetch(`${backendBase}/api/auth/${mode}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    cache: 'no-store'
-  });
-
-  const data = (await response.json().catch(() => ({}))) as BackendAuthResponse & { message?: string };
-  if (!response.ok) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: data.message || 'Authentication failed. Please check your details and try again.'
-      },
-      { status: response.status }
-    );
-  }
-
-  if (!data.user) {
-    return NextResponse.json({ success: false, message: 'Authentication service returned an invalid response.' }, { status: 502 });
-  }
-
-  return createAuthSuccessResponse(data.user, mode === 'signup');
 }
 
-function createAuthSuccessResponse(user: SessionUser, isSignup: boolean) {
-  const token = createSessionToken(user);
-  const response = NextResponse.json({
-    success: true,
-    message: isSignup ? 'Account created successfully.' : 'Welcome back!',
-    user
-  });
+export async function handleRequestPasswordReset(request: NextRequest) {
+  try {
+    assertTrustedOrigin(request);
+    const payload = requestPasswordResetSchema.parse(await getJsonBody<RequestPasswordResetInput>(request));
+    await requestPasswordReset(payload);
 
-  response.cookies.set({
-    name: SESSION_COOKIE_NAME,
-    value: token,
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 8
-  });
-
-  return response;
+    return NextResponse.json({
+      success: true,
+      message: 'If your details are correct, an OTP has been sent to your verified phone number.'
+    });
+  } catch (error) {
+    return toErrorResponse(error, 400);
+  }
 }
 
-export async function handleAuthRequest(mode: AuthMode, body: AuthRequestBody) {
-  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEV_AUTH_FALLBACK === 'true') {
-    throw new Error('Development auth fallback cannot be enabled in production.');
+export async function handleVerifyOtp(request: NextRequest) {
+  try {
+    assertTrustedOrigin(request);
+    const payload = verifyOtpSchema.parse(await getJsonBody<VerifyOtpInput>(request));
+    await verifyPasswordResetOtp(payload);
+    return NextResponse.json({ success: true, message: 'OTP verified. You can now reset your password.' });
+  } catch (error) {
+    return toErrorResponse(error, 400);
   }
-
-  const { errors, payload } = validateBody(body, mode);
-  if (errors.length > 0) {
-    return NextResponse.json({ success: false, message: errors.join(' ') }, { status: 400 });
-  }
-
-  const backendResult = await tryBackendAuth(mode, body);
-  if (backendResult) {
-    return backendResult;
-  }
-
-  if (process.env.NODE_ENV !== 'development' || process.env.ENABLE_DEV_AUTH_FALLBACK !== 'true') {
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'Authentication service is unavailable. Contact support to complete sign in.'
-      },
-      { status: 503 }
-    );
-  }
-
-  console.warn('Development auth fallback enabled. Set AUTH_API_BASE_URL to test real backend authentication.');
-  const fallbackUser = createDefaultUser(payload.email, payload.name || 'School Transport User');
-  return createAuthSuccessResponse(fallbackUser, mode === 'signup');
 }
 
-export function clearSessionResponse() {
-  const response = NextResponse.json({ success: true, message: 'Logged out successfully.' });
-  response.cookies.delete(SESSION_COOKIE_NAME);
-  return response;
-}
-
-export function getSessionCookieValue() {
-  return cookies().get(SESSION_COOKIE_NAME)?.value;
+export async function handleResetPassword(request: NextRequest) {
+  try {
+    assertTrustedOrigin(request);
+    const payload = resetPasswordSchema.parse(await getJsonBody<ResetPasswordInput>(request));
+    await resetPassword(payload);
+    return NextResponse.json({ success: true, message: 'Password reset successful. Please log in again.' });
+  } catch (error) {
+    return toErrorResponse(error, 400);
+  }
 }

@@ -1,14 +1,13 @@
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Navbar } from '../components/Navbar';
-import { canAccessRole, parseSessionToken } from '../lib/auth-session';
+import { validateCurrentSession } from '../lib/auth-server';
 
 const actions = ['Start Route', 'Student Attendance', 'Navigate Route', 'Emergency Button', 'Trip Completion', 'Fuel Logging'];
+export const dynamic = 'force-dynamic';
 
-export default function DriverDashboard() {
-  const token = cookies().get('mst_session')?.value;
-  const user = parseSessionToken(token);
-  if (!user || !canAccessRole(user.role, ['driver', 'admin'])) {
+export default async function DriverDashboard() {
+  const session = await validateCurrentSession('driver');
+  if (!session) {
     redirect('/login?next=/driver-dashboard');
   }
 
