@@ -14,6 +14,33 @@ const trustItems: [string, any][] = [
   ['Seatbelt Compliance', Car]
 ];
 
+const coreFeatures = [
+  {
+    title: 'Live route tracking',
+    description: 'Parents can follow the bus location in real-time from pickup to school drop-off.'
+  },
+  {
+    title: 'Pickup verification',
+    description: 'Secure OTP/QR handoff confirms the right child boards the right vehicle.'
+  },
+  {
+    title: 'Instant parent alerts',
+    description: 'Automatic notifications for departure, delays, arrival, and emergencies.'
+  },
+  {
+    title: 'Driver safety profiles',
+    description: 'Background verified drivers with documented route and safety performance.'
+  },
+  {
+    title: 'Vehicle compliance checks',
+    description: 'Daily roadworthy checks and monitored driving behavior for every trip.'
+  },
+  {
+    title: 'School-focused routing',
+    description: 'Optimized routes by suburb and school schedules to reduce delays.'
+  }
+];
+
 const drivers = [
   { name: 'Sipho Dlamini', exp: '8 Years Scholar Transport', lang: 'Zulu, English, Sotho' },
   { name: 'Thandi Mokoena', exp: '6 Years Scholar Transport', lang: 'Zulu, English, Tswana' }
@@ -38,27 +65,35 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-        <h2 className="text-2xl font-bold">Trust & Safety Standards</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
-          {trustItems.map(([label, Icon]) => (
-            <div key={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><Icon className="h-5 w-5 text-emerald-700"/><p className="mt-2 text-sm font-medium">{label}</p></div>
+        <h2 className="text-2xl font-bold">Core Platform Features</h2>
+        <p className="mt-2 max-w-3xl text-sm text-slate-600">Everything after the hero is now surfaced clearly so families can see exactly what the service offers.</p>
+        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {coreFeatures.map((feature) => (
+            <article key={feature.title} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-base font-semibold">{feature.title}</h3>
+              <p className="mt-2 text-sm text-slate-600">{feature.description}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-12 md:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-4 md:px-8">
+        <h2 className="text-2xl font-bold">Trust & Safety Standards</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-4">
+          {trustItems.map(([label, Icon]) => (
+            <div key={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><Icon className="h-5 w-5 text-emerald-700" /><p className="mt-2 text-sm font-medium">{label}</p></div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-12 pt-8 md:px-8">
         <h2 className="text-2xl font-bold">How It Works</h2>
-        <ol className="mt-5 grid gap-4 md:grid-cols-3">{['Parent registers child.','Child assigned to route based on location and school.','Parent receives pickup schedule.','Driver verifies pickup using secure OTP or QR code.','Live transport updates sent automatically.','Parent receives school arrival confirmation.'].map((s,i)=><li key={s} className="rounded-xl border border-slate-200 bg-white p-4 text-sm"><span className="font-semibold">Step {i+1}: </span>{s}</li>)}</ol>
+        <ol className="mt-5 grid gap-4 md:grid-cols-3">{['Parent registers child.', 'Child assigned to route based on location and school.', 'Parent receives pickup schedule.', 'Driver verifies pickup using secure OTP or QR code.', 'Live transport updates sent automatically.', 'Parent receives school arrival confirmation.'].map((s, i) => <li key={s} className="rounded-xl border border-slate-200 bg-white p-4 text-sm"><span className="font-semibold">Step {i + 1}: </span>{s}</li>)}</ol>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-12 md:px-8">
-        <h2 className="text-2xl font-bold">Live Operations Today</h2>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">{['Routes Active Today: 4','Current Weather: 12°C, Clear in Soweto','Average On-Time Arrivals: 96%','Vehicle Safety Status: All checks passed','Morning Routes Running: 3/3','Afternoon Routes Scheduled: 4'].map((s)=><div key={s} className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium">{s}</div>)}</div>
-      </section>
-
-      <section className="mx-auto grid max-w-7xl gap-6 px-4 pb-12 md:grid-cols-2 md:px-8">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h3 className="text-xl font-bold">Driver Verification</h3><div className="mt-4 space-y-3">{drivers.map(d=><div key={d.name} className="rounded-lg bg-slate-50 p-4 text-sm"><p className="font-semibold">Driver: {d.name}</p><p>Experience: {d.exp}</p><p>Languages: {d.lang}</p><p>PDP Verified: Yes</p><p>Emergency Training: Certified</p></div>)}</div></div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h3 className="text-xl font-bold">Vehicle Safety: Toyota Avanza</h3><Image src="https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=1200&q=80" alt="Toyota Avanza vehicle" width={900} height={600} className="mt-4 rounded-xl object-cover"/><ul className="mt-4 list-disc space-y-1 pl-5 text-sm"><li>Roadworthy verified</li><li>Fully insured</li><li>GPS installed</li><li>Speed monitored</li><li>Daily inspections completed</li><li>Child-safe seating</li></ul></div>
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 pb-16 md:grid-cols-2 md:px-8">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h3 className="text-xl font-bold">Driver Verification</h3><div className="mt-4 space-y-3">{drivers.map(d => <div key={d.name} className="rounded-lg bg-slate-50 p-4 text-sm"><p className="font-semibold">Driver: {d.name}</p><p>Experience: {d.exp}</p><p>Languages: {d.lang}</p><p>PDP Verified: Yes</p><p>Emergency Training: Certified</p></div>)}</div></div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h3 className="text-xl font-bold">Vehicle Safety: Toyota Avanza</h3><Image src="https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=1200&q=80" alt="Toyota Avanza vehicle" width={900} height={600} className="mt-4 rounded-xl object-cover" /><ul className="mt-4 list-disc space-y-1 pl-5 text-sm"><li>Roadworthy verified</li><li>Fully insured</li><li>GPS installed</li><li>Speed monitored</li><li>Daily inspections completed</li><li>Child-safe seating</li></ul></div>
       </section>
     </main>
   );
