@@ -35,10 +35,17 @@ npm run start
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm run start`
    - **Node Version**: `20` (recommended)
-5. Add environment variable:
+
+6. Add environment variables in Render (**Environment** tab):
    - `NODE_ENV=production`
-6. Click **Create Web Service**.
-7. After deploy completes, open the Render URL and verify:
+   - `DATABASE_URL=postgresql://schooltransport_user:VAaOei5OiEeXGOV4v0UNn1j4iTf1fOrS@dpg-d84b6t58nd3s73ctvk1g-a/schooltransport` (use this internal URL if your app and DB are both on Render)
+   - `AUTH_ACCESS_TOKEN_SECRET=fJ4WgOo4Ks_hGsUpbmN0gQ7Md8C8ifLpkGY43bbErFGuXcl6T9WqGAx8nP3AlkgW`
+   - `AUTH_REFRESH_TOKEN_SECRET=iM5aavBcNhZR0mWR0yvo-JTqREBRxZRfwlnV0Ks_q9h7dKPRLwgWXam71ftwjmI6`
+   - `AUTH_RESET_TOKEN_SECRET=AUVPOiqN-KoZDDNW7K93g3lNM9PuUyODOeggZjWRQbNBwEl3FJh0WuCrHVQJ-dGq`
+7. Optional (external access from local tools), use:
+   - `postgresql://schooltransport_user:VAaOei5OiEeXGOV4v0UNn1j4iTf1fOrS@dpg-d84b6t58nd3s73ctvk1g-a.oregon-postgres.render.com/schooltransport`
+8. Click **Create Web Service**.
+9. After deploy completes, open the Render URL and verify:
    - Home page loads with images
    - Navigation to Parent/Driver/Admin pages works
    - HTTPS is active
