@@ -1,17 +1,7 @@
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { BadgeCheck, BellRing, CheckCircle2, Languages, MapPinned, ShieldCheck, UserCheck } from 'lucide-react';
 import { Navbar } from './components/Navbar';
-
-const trustPillars = [
-  'Verified Drivers & PDP Checks',
-  'Live GPS Tracking On Every Route',
-  'Real-Time Parent Alerts',
-  'Secure QR Child Verification'
-];
 
 const fleet = [
   { name: 'Toyota Avanza', seats: '7 Seater', safety: '4.9/5 Safety', route: 'Midrand · Sandton · Bryanston', img: 'https://images.unsplash.com/photo-1511910849309-0dffb8785146?auto=format&fit=crop&w=1200&q=80' },
@@ -30,37 +20,18 @@ export default function HomePage() {
     <main className="bg-slate-50 text-slate-900">
       <Navbar />
 
-      <section className="relative isolate min-h-screen overflow-hidden px-4 pb-16 pt-24 md:px-8">
-        <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_10%_10%,#fdba7420,transparent_45%),radial-gradient(circle_at_80%_20%,#22c55e1f,transparent_45%),#f8fafc]" />
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-2">
-          <div>
-            <p className="inline-flex rounded-full border border-amber-300/70 bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 backdrop-blur">South Africa's Trusted School Transport OS</p>
-            <h1 className="mt-6 text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">Your Child&apos;s Safety Starts Before School Begins.</h1>
-            <p className="mt-5 max-w-xl text-base text-slate-600 md:text-lg">Track every ride, verify every driver, and receive real-time school transport updates across South Africa.</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/tracking" className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5">Track School Transport</Link>
-              <Link href="/register" className="rounded-2xl border border-slate-300 bg-white/90 px-6 py-3 text-sm font-semibold text-slate-900 backdrop-blur transition hover:-translate-y-0.5">Secure Your Child&apos;s Seat</Link>
-            </div>
-            <div className="mt-8 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
-              {trustPillars.map((item) => (
-                <div key={item} className="flex items-center gap-2 rounded-xl bg-white/70 p-3 shadow-sm backdrop-blur"><CheckCircle2 className="h-4 w-4 text-emerald-600" />{item}</div>
-              ))}
-            </div>
+      <section className="relative h-[72vh] min-h-[520px] w-full overflow-hidden">
+        <Image src="https://images.unsplash.com/photo-1509749837427-ac94a2553d0e?auto=format&fit=crop&w=2000&q=80" alt="Scholar transport pickup in Soweto" fill priority className="object-cover" />
+        <div className="absolute inset-0 bg-slate-900/55" />
+        <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-4 text-white md:px-8">
+          <h1 className="max-w-3xl text-4xl font-bold leading-tight md:text-6xl">Safe & Verified Scholar Transport Across Soweto</h1>
+          <p className="mt-4 max-w-2xl text-base text-slate-100 md:text-lg">Real-time child safety tracking, verified drivers, and reliable school transport trusted by modern parents.</p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link href="/parent-dashboard" className="rounded-lg bg-amber-500 px-5 py-3 font-semibold text-slate-950">Register Your Child</Link>
+            <Link href="/parent-dashboard" className="rounded-lg bg-white px-5 py-3 font-semibold text-slate-900">Parent Login</Link>
+            <Link href="/tracking" className="rounded-lg border border-white/70 px-5 py-3 font-semibold">View Transport Routes</Link>
           </div>
-
-          <div className="relative">
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 p-4 shadow-2xl backdrop-blur-xl">
-              <Image src="https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=1600&q=80" alt="School transport vehicle on route" width={1200} height={900} className="h-[460px] w-full rounded-3xl object-cover" />
-              <div className="absolute left-8 top-8 rounded-xl border border-white/50 bg-white/80 px-3 py-2 text-xs font-medium shadow-md">Live Route: Sandton → St Stithians</div>
-              <div className="absolute bottom-8 right-8 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-xs shadow-lg">
-                <p className="flex items-center gap-2 font-semibold text-emerald-700"><BellRing className="h-4 w-4" /> Child checked in safely</p>
-                <p className="mt-1 text-slate-500">Mom notified at 06:42</p>
-              </div>
-            </div>
-            <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 4 }} className="absolute -left-8 top-16 hidden rounded-xl border border-slate-200 bg-white/90 p-3 text-xs shadow-xl md:block"><p className="font-semibold">Driver arriving in 4 mins</p><p className="text-slate-500">Toyota Avanza · CNR 5th Ave</p></motion.div>
-            <motion.div animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 4.2 }} className="absolute -bottom-5 left-20 hidden rounded-xl border border-slate-200 bg-white/90 p-3 text-xs shadow-xl md:block"><p className="font-semibold">QR pickup verified</p><p className="text-slate-500">Learner: Amahle N.</p></motion.div>
-          </div>
-        </motion.div>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-16 md:px-8">
