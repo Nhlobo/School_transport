@@ -41,9 +41,10 @@ export function AuthForm({ mode, nextUrl }: AuthFormProps) {
       southAfricanId: '',
       phoneNumber: '',
       pdpLicenseNumber: '',
+      vehicleRegistrationNumber: '',
       password: '',
       confirmPassword: ''
-    }
+    } as Partial<RegisterInput>
   });
 
   const isRegister = mode === 'register';
@@ -149,9 +150,9 @@ export function AuthForm({ mode, nextUrl }: AuthFormProps) {
                   id="pdpLicenseNumber"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                   {...registerForm.register('pdpLicenseNumber')}
-                  aria-invalid={Boolean(registerForm.formState.errors.pdpLicenseNumber)}
+                  aria-invalid={Boolean((registerForm.formState.errors as any).pdpLicenseNumber)}
                 />
-                {fieldError(registerForm.formState.errors.pdpLicenseNumber?.message)}
+                {fieldError((registerForm.formState.errors as any).pdpLicenseNumber?.message)}
               </>
             )}
           </>

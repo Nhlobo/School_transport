@@ -5,6 +5,7 @@ import { randomInt, randomUUID, createHash } from 'crypto';
 import { Pool } from 'pg';
 import type {
   LoginInput,
+  RegisterInput,
   RegisterParentInput,
   RegisterDriverInput,
   RequestPasswordResetInput,
@@ -304,7 +305,7 @@ async function getUserByPhoneNumber(phoneNumber: string) {
   return null;
 }
 
-async function createUser(input: RegisterInput, passwordHash: string) {
+async function createUser(input: { role?: UserRole; fullName: string; southAfricanId: string; phoneNumber: string; pdpLicenseNumber?: string; password: string }, passwordHash: string) {
   const user: UserRecord = {
     id: randomUUID(),
     role: 'parent' as UserRole,
@@ -543,8 +544,7 @@ export async function registerParentUser(rawInput: RegisterParentInput) {
     ...rawInput,
     fullName: rawInput.fullName.trim(),
     southAfricanId: normalizeSouthAfricanId(rawInput.southAfricanId),
-    phoneNumber: normalizePhoneNumber(rawInput.phoneNumber),
-    pdpLicenseNumber: rawInput.pdpLicenseNumber?.trim()
+    phoneNumber: normalizePhoneNumber(rawInput.phoneNumber)
   };
 
   const duplicateById = await getUserBySouthAfricanId(input.southAfricanId);

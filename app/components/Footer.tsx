@@ -13,7 +13,7 @@ export function Footer() {
           <ul className="mt-2 space-y-1">
             <li><Link href="/tracking" className="hover:text-slate-900">Live tracking</Link></li>
             <li><Link href="/contact" className="hover:text-slate-900">Support</Link></li>
-            <li><Link href="/pricing" className="hover:text-slate-900">Pricing</Link></li>
+            <li><Link href="/parent-dashboard" className="hover:text-slate-900">Parent onboarding</Link></li>
           </ul>
         </div>
         <div>

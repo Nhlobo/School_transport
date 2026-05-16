@@ -24,7 +24,12 @@ const zaIdSchema = z.string().refine(isValidSouthAfricanId, 'Enter a valid South
 
 export const loginSchema = z.object({ southAfricanId: zaIdSchema, password: z.string().min(1), captchaToken: z.string().optional(), deviceFingerprint: z.string().min(12).optional() });
 export const registerParentSchema = z.object({ fullName: z.string().min(2), southAfricanId: zaIdSchema, phoneNumber: z.string().refine(isValidPhoneNumber), password: passwordSchema, confirmPassword: z.string(), captchaToken: z.string().optional() }).refine(v => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match.' });
-export const registerDriverSchema = z.object({ fullName: z.string().min(2), southAfricanId: zaIdSchema, phoneNumber: z.string().refine(isValidPhoneNumber), pdpLicenseNumber: z.string().min(4), vehicleRegistrationNumber: z.string().min(4), password: passwordSchema, confirmPassword: z.string(), captchaToken: z.string().optional() }).refine(v => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match.' });
+export const registerDriverSchema = z.object({ fullName: z.string().min(2), southAfricanId: zaIdSchema, phoneNumber: z.string().refine(isValidPhoneNumber), pdpLicenseNumber: z.string().min(4), vehicleRegistrationNumber: z.string().min(4).optional(), password: passwordSchema, confirmPassword: z.string(), captchaToken: z.string().optional() }).refine(v => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match.' });
+
+export const registerSchema = z.discriminatedUnion('role', [
+  registerParentSchema.extend({ role: z.literal('parent') }),
+  registerDriverSchema.extend({ role: z.literal('driver') })
+]);
 
 export const requestPasswordResetSchema = z.object({ southAfricanId: zaIdSchema, phoneNumber: z.string().refine(isValidPhoneNumber) });
 export const verifyOtpSchema = z.object({ southAfricanId: zaIdSchema, phoneNumber: z.string().refine(isValidPhoneNumber), otp: z.string().regex(/^\d{6}$/) });
@@ -33,6 +38,7 @@ export const resetPasswordSchema = z.object({ southAfricanId: zaIdSchema, phoneN
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterParentInput = z.infer<typeof registerParentSchema>;
 export type RegisterDriverInput = z.infer<typeof registerDriverSchema>;
+export type RegisterInput = z.infer<typeof registerSchema>;
 export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { loginSchema, registerParentSchema, registerDriverSchema, requestPasswordResetSchema, resetPasswordSchema, verifyOtpSchema, type LoginInput, type RegisterParentInput, type RegisterDriverInput, type RequestPasswordResetInput, type ResetPasswordInput, type VerifyOtpInput } from '@/app/lib/validation';
+import { loginSchema, registerSchema, registerParentSchema, registerDriverSchema, requestPasswordResetSchema, resetPasswordSchema, verifyOtpSchema, type LoginInput, type RegisterInput, type RegisterParentInput, type RegisterDriverInput, type RequestPasswordResetInput, type ResetPasswordInput, type VerifyOtpInput } from '@/app/lib/validation';
 import { clearAuthCookies, loginUser, logoutUser, refreshUserSession, registerParentUser, registerDriverUser, requestPasswordReset, resetPassword, validateCurrentSession, verifyPasswordResetOtp, ownerApproveDriver, ownerRejectDriver, ownerSuspendDriver } from '@/app/lib/auth-server';
 
 function assertTrustedOrigin(request: NextRequest) { const o=request.headers.get('origin'); const h=request.headers.get('host'); if(!o||!h) return; if(new URL(o).host.toLowerCase()!==h.toLowerCase()) throw new Error('Cross-site request blocked.'); }
@@ -8,6 +8,18 @@ function toErrorResponse(error: unknown, status=400){ return NextResponse.json({
 
 export async function handleRegisterParent(request: NextRequest){ try { assertTrustedOrigin(request); const payload=registerParentSchema.parse(await getJsonBody<RegisterParentInput>(request)); const user=await registerParentUser(payload); return NextResponse.json({success:true,user,message:'Parent account created.'},{status:201}); } catch(e){ return toErrorResponse(e,400);} }
 export async function handleRegisterDriver(request: NextRequest){ try { assertTrustedOrigin(request); const payload=registerDriverSchema.parse(await getJsonBody<RegisterDriverInput>(request)); const user=await registerDriverUser(payload); return NextResponse.json({success:true,user,message:'Driver registration submitted for owner verification.'},{status:201}); } catch(e){ return toErrorResponse(e,400);} }
+export async function handleRegister(request: NextRequest){
+  try {
+    assertTrustedOrigin(request);
+    const payload = registerSchema.parse(await getJsonBody<RegisterInput>(request));
+    if (payload.role === 'driver') {
+      const user = await registerDriverUser({ ...payload, vehicleRegistrationNumber: payload.vehicleRegistrationNumber ?? payload.pdpLicenseNumber });
+      return NextResponse.json({ success: true, user, message: 'Driver registration submitted for owner verification.' }, { status: 201 });
+    }
+    const user = await registerParentUser(payload);
+    return NextResponse.json({ success: true, user, message: 'Parent account created.' }, { status: 201 });
+  } catch (e) { return toErrorResponse(e, 400); }
+}
 
 export async function handleLogin(request: NextRequest){ try { assertTrustedOrigin(request); const payload=loginSchema.parse(await getJsonBody<LoginInput>(request)); const user=await loginUser(payload); return NextResponse.json({success:true,message:'Login successful.',user}); } catch(e){ return toErrorResponse(e,401);} }
 export async function handleLogout(request?: NextRequest){ if(request) assertTrustedOrigin(request); await logoutUser(); return NextResponse.json({success:true,message:'Logged out successfully.'}); }
