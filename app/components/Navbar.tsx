@@ -10,7 +10,6 @@ const publicLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/routes', label: 'Routes' },
-  { href: '/pricing', label: 'Pricing' },
   { href: '/contact', label: 'Contact' },
   { href: '/tracking', label: 'Live Tracking' }
 ];
