@@ -1,12 +1,12 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { createDefaultUser, createSessionToken, SESSION_COOKIE_NAME, type SessionUser, type UserRole } from '@/app/lib/auth-session';
+import { createDefaultUser, createSessionToken, SESSION_COOKIE_NAME, type SessionUser } from '@/app/lib/auth-session';
+import { isValidEmail } from '@/app/lib/validation';
 
 type AuthRequestBody = {
   email?: string;
   password?: string;
   name?: string;
-  role?: UserRole;
 };
 
 type BackendAuthResponse = {
@@ -26,7 +26,7 @@ function validateBody(body: AuthRequestBody, mode: AuthMode) {
   const password = body.password || '';
   const name = body.name?.trim() || '';
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     errors.push('Please enter a valid email address.');
   }
 
@@ -101,6 +101,10 @@ function createAuthSuccessResponse(user: SessionUser, isSignup: boolean) {
 }
 
 export async function handleAuthRequest(mode: AuthMode, body: AuthRequestBody) {
+  if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEV_AUTH_FALLBACK === 'true') {
+    throw new Error('Development auth fallback cannot be enabled in production.');
+  }
+
   const { errors, payload } = validateBody(body, mode);
   if (errors.length > 0) {
     return NextResponse.json({ success: false, message: errors.join(' ') }, { status: 400 });
@@ -111,7 +115,7 @@ export async function handleAuthRequest(mode: AuthMode, body: AuthRequestBody) {
     return backendResult;
   }
 
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV !== 'development' || process.env.ENABLE_DEV_AUTH_FALLBACK !== 'true') {
     return NextResponse.json(
       {
         success: false,
@@ -121,7 +125,8 @@ export async function handleAuthRequest(mode: AuthMode, body: AuthRequestBody) {
     );
   }
 
-  const fallbackUser = createDefaultUser(payload.email, payload.name || 'School Transport User', body.role);
+  console.warn('Development auth fallback enabled. Set AUTH_API_BASE_URL to test real backend authentication.');
+  const fallbackUser = createDefaultUser(payload.email, payload.name || 'School Transport User');
   return createAuthSuccessResponse(fallbackUser, mode === 'signup');
 }
 

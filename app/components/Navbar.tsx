@@ -69,7 +69,12 @@ export function Navbar() {
             </Link>
           ))}
           {isAuthenticated && !loading ? (
-            <button type="button" onClick={onLogout} className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-100">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-100"
+              aria-label="Log out of your account"
+            >
               Log out
             </button>
           ) : null}

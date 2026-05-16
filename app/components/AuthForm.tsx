@@ -4,16 +4,13 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useAuth } from '@/app/components/AuthProvider';
+import { isValidEmail } from '@/app/lib/validation';
 
 type AuthMode = 'login' | 'signup';
 
 type AuthFormProps = {
   mode: AuthMode;
 };
-
-function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
-}
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
@@ -29,6 +26,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   const isSignup = mode === 'signup';
   const nextUrl = searchParams.get('next');
 
+  const safeNextUrl = nextUrl && nextUrl.startsWith('/') && !nextUrl.startsWith('//') ? nextUrl : null;
+
   const submitLabel = useMemo(() => (isSignup ? 'Create account' : 'Log in'), [isSignup]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -40,7 +39,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       return;
     }
 
-    if (!validateEmail(email)) {
+    if (!isValidEmail(email)) {
       setStatus({ type: 'error', message: 'Please enter a valid email address.' });
       return;
     }
@@ -61,7 +60,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       setStatus({ type: result.success ? 'success' : 'error', message: result.message });
 
       if (result.success) {
-        router.push(nextUrl || '/parent-dashboard');
+        router.push(safeNextUrl || '/parent-dashboard');
         router.refresh();
       }
     } finally {

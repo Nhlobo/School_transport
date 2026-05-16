@@ -14,10 +14,16 @@ type SessionPayload = SessionUser & {
 };
 
 export const SESSION_COOKIE_NAME = 'mst_session';
-const SESSION_TTL_SECONDS = 60 * 60 * 8;
+const SESSION_TTL_HOURS = 8;
+const SESSION_TTL_SECONDS = SESSION_TTL_HOURS * 60 * 60;
 
 function getSessionSecret() {
-  return process.env.AUTH_SESSION_SECRET || 'change-me-in-production';
+  const secret = process.env.AUTH_SESSION_SECRET;
+  if (!secret) {
+    throw new Error('AUTH_SESSION_SECRET must be configured.');
+  }
+
+  return secret;
 }
 
 function toBase64Url(value: string) {
@@ -70,24 +76,12 @@ export function parseSessionToken(token: string | undefined | null): SessionUser
   }
 }
 
-export function roleFromEmail(email: string): UserRole {
-  if (email.toLowerCase().includes('driver')) {
-    return 'driver';
-  }
-
-  if (email.toLowerCase().includes('admin')) {
-    return 'admin';
-  }
-
-  return 'parent';
-}
-
-export function createDefaultUser(email: string, name: string, role?: UserRole): SessionUser {
+export function createDefaultUser(email: string, name: string): SessionUser {
   return {
     id: randomUUID(),
     email,
     name,
-    role: role ?? roleFromEmail(email)
+    role: 'parent'
   };
 }
 
