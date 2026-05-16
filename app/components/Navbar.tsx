@@ -29,7 +29,7 @@ export function Navbar() {
       ]
     : [
         { href: '/login', label: 'Log in' },
-        { href: '/signup', label: 'Sign up' }
+        { href: '/register', label: 'Register' }
       ];
 
   const links = [...publicLinks, ...authLinks];
@@ -81,7 +81,7 @@ export function Navbar() {
         </nav>
       </div>
 
-      {isAuthenticated && user ? <p className="px-4 pb-3 text-xs text-slate-500 md:px-8">Signed in as {user.name} ({user.role})</p> : null}
+      {isAuthenticated && user ? <p className="px-4 pb-3 text-xs text-slate-500 md:px-8">Signed in as {user.fullName} ({user.role})</p> : null}
       {!loading && notice ? (
         <p className="mx-4 mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 md:mx-8" role="status">
           {notice}

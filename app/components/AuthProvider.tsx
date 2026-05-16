@@ -1,28 +1,36 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import type { SessionUser } from '@/app/lib/auth-session';
+import type { AuthUser } from '@/app/lib/auth-server';
 
 type AuthResult = {
   success: boolean;
   message: string;
 };
 
-type AuthContextValue = {
-  user: SessionUser | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<AuthResult>;
-  signup: (name: string, email: string, password: string) => Promise<AuthResult>;
-  logout: () => Promise<AuthResult>;
-  refreshSession: () => Promise<void>;
-};
-
 type AuthResponse = {
   success?: boolean;
   message?: string;
-  user?: SessionUser | null;
+  user?: AuthUser | null;
   authenticated?: boolean;
+};
+
+type AuthContextValue = {
+  user: AuthUser | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (southAfricanId: string, password: string) => Promise<AuthResult>;
+  register: (payload: {
+    role: 'parent' | 'driver';
+    fullName: string;
+    southAfricanId: string;
+    phoneNumber: string;
+    pdpLicenseNumber?: string;
+    password: string;
+    confirmPassword: string;
+  }) => Promise<AuthResult>;
+  logout: () => Promise<AuthResult>;
+  refreshSession: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -38,7 +46,7 @@ async function parseApiResponse(response: Response) {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshSession = useCallback(async () => {
@@ -57,29 +65,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refreshSession();
   }, [refreshSession]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (southAfricanId: string, password: string) => {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ southAfricanId, password })
     });
+
     const data = await parseApiResponse(response);
     if (data.ok) {
       setUser(data.user);
     }
+
     return { success: data.ok, message: data.message };
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, password: string) => {
-    const response = await fetch('/api/auth/signup', {
+  const register = useCallback(async (payload: AuthContextValue['register'] extends (arg: infer T) => Promise<AuthResult> ? T : never) => {
+    const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify(payload)
     });
+
     const data = await parseApiResponse(response);
-    if (data.ok) {
-      setUser(data.user);
-    }
     return { success: data.ok, message: data.message };
   }, []);
 
@@ -98,11 +106,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       isAuthenticated: Boolean(user),
       login,
-      signup,
+      register,
       logout,
       refreshSession
     }),
-    [loading, login, logout, refreshSession, signup, user]
+    [loading, login, logout, refreshSession, register, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
