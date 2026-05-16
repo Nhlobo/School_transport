@@ -5,7 +5,8 @@ import { randomInt, randomUUID, createHash } from 'crypto';
 import { Pool } from 'pg';
 import type {
   LoginInput,
-  RegisterInput,
+  RegisterParentInput,
+  RegisterDriverInput,
   RequestPasswordResetInput,
   ResetPasswordInput,
   UserRole,
@@ -33,6 +34,7 @@ const OTP_TTL_MINUTES = 5;
 export type AuthUser = {
   id: string;
   role: UserRole;
+  status?: string;
   fullName: string;
   southAfricanId: string;
   phoneNumber: string;
@@ -50,6 +52,7 @@ type SessionRecord = {
 };
 
 type UserRecord = {
+  status?: 'PENDING'|'VERIFIED'|'REJECTED'|'SUSPENDED';
   id: string;
   role: UserRole;
   full_name: string;
@@ -61,6 +64,8 @@ type UserRecord = {
   locked_until: Date | null;
   created_at: Date;
 };
+
+type DriverVerificationRecord = {id:string;driver_id:string;pdp_number:string;vehicle_registration:string;verification_status:string;verified_by_owner:string|null;verified_at:Date|null;};
 
 type OtpRecord = {
   id: string;
@@ -91,6 +96,7 @@ const memory = {
   users: new Map<string, UserRecord>(),
   sessions: new Map<string, SessionRecord>(),
   otpCodes: new Map<string, OtpRecord>(),
+  driverVerifications: new Map<string, DriverVerificationRecord>(),
   loginAttempts: [] as Array<{ id: string; south_african_id: string; ip_address: string; success: boolean; timestamp: Date }>
 };
 
@@ -149,7 +155,8 @@ function mapUser(user: UserRecord): AuthUser {
     role: user.role,
     fullName: user.full_name,
     southAfricanId: user.south_african_id,
-    phoneNumber: user.phone_number
+    phoneNumber: user.phone_number,
+    status: user.status || (user.role === 'driver' ? 'PENDING' : 'VERIFIED')
   };
 }
 
@@ -300,7 +307,7 @@ async function getUserByPhoneNumber(phoneNumber: string) {
 async function createUser(input: RegisterInput, passwordHash: string) {
   const user: UserRecord = {
     id: randomUUID(),
-    role: input.role,
+    role: 'parent' as UserRole,
     full_name: input.fullName.trim(),
     south_african_id: normalizeSouthAfricanId(input.southAfricanId),
     phone_number: normalizePhoneNumber(input.phoneNumber),
@@ -528,11 +535,11 @@ export function clearAuthCookies() {
   cookieStore.delete(RESET_COOKIE_NAME);
 }
 
-export async function registerUser(rawInput: RegisterInput) {
+export async function registerParentUser(rawInput: RegisterParentInput) {
   requireAuthConfig();
   enforceRateLimit(`register:${getRequestIp()}`, 10, 60_000);
 
-  const input: RegisterInput = {
+  const input = {
     ...rawInput,
     fullName: rawInput.fullName.trim(),
     southAfricanId: normalizeSouthAfricanId(rawInput.southAfricanId),
@@ -573,6 +580,8 @@ export async function loginUser(input: LoginInput) {
     throw new Error('Account is temporarily locked due to failed login attempts. Try again later.');
   }
 
+  if (user.role === 'driver' && (user.status || 'PENDING') !== 'VERIFIED') { await recordLoginAttempt(southAfricanId, false); throw new Error('Driver account is pending owner verification.'); }
+  if (user.status === 'SUSPENDED') throw new Error('Account suspended. Contact owner.');
   const passwordMatches = await bcrypt.compare(input.password, user.password_hash);
   if (!passwordMatches) {
     const failedAttempts = user.failed_login_attempts + 1;
@@ -820,3 +829,24 @@ export function getAuthCookieNames() {
     refresh: REFRESH_COOKIE_NAME
   };
 }
+
+
+export async function registerDriverUser(rawInput: RegisterDriverInput) {
+  requireAuthConfig();
+  enforceRateLimit(`register-driver:${getRequestIp()}`, 8, 60_000);
+  const input = { ...rawInput, fullName: rawInput.fullName.trim(), southAfricanId: normalizeSouthAfricanId(rawInput.southAfricanId), phoneNumber: normalizePhoneNumber(rawInput.phoneNumber) };
+  if (await getUserBySouthAfricanId(input.southAfricanId)) throw new Error('An account with this South African ID already exists.');
+  if (await getUserByPhoneNumber(input.phoneNumber)) throw new Error('An account with this phone number already exists.');
+  const passwordHash = await bcrypt.hash(input.password, 12);
+  const user = await createUser({ ...input, role: 'driver', pdpLicenseNumber: input.pdpLicenseNumber } as any, passwordHash);
+  (user as any).status = 'PENDING';
+  const rec = { id: randomUUID(), driver_id: user.id, pdp_number: input.pdpLicenseNumber, vehicle_registration: input.vehicleRegistrationNumber, verification_status: 'PENDING', verified_by_owner: null, verified_at: null };
+  if (pool) { await pool.query('INSERT INTO driver_verifications (id, driver_id, pdp_number, vehicle_registration, verification_status, verified_by_owner, verified_at) VALUES ($1,$2,$3,$4,$5,NULL,NULL)', [rec.id, rec.driver_id, rec.pdp_number, rec.vehicle_registration, rec.verification_status]); } else { memory.driverVerifications.set(rec.id, rec as any); }
+  return mapUser(user);
+}
+
+
+async function requireOwnerSession() { const session = await validateCurrentSession('owner'); if (!session) throw new Error('Owner authorization required.'); return session.user.id; }
+export async function ownerApproveDriver(driverId: string, vehicleRegistrationNumber: string) { const ownerId = await requireOwnerSession(); if (pool) { await pool.query("UPDATE users SET status='VERIFIED' WHERE id=$1 AND role='driver'", [driverId]); await pool.query("UPDATE driver_verifications SET verification_status='VERIFIED', vehicle_registration=$2, verified_by_owner=$3, verified_at=NOW() WHERE driver_id=$1", [driverId, vehicleRegistrationNumber, ownerId]); } }
+export async function ownerRejectDriver(driverId: string, _reason?: string) { await requireOwnerSession(); if (pool) { await pool.query("UPDATE users SET status='REJECTED' WHERE id=$1 AND role='driver'", [driverId]); await pool.query("UPDATE driver_verifications SET verification_status='REJECTED' WHERE driver_id=$1", [driverId]); } }
+export async function ownerSuspendDriver(driverId: string, _reason?: string) { await requireOwnerSession(); if (pool) { await pool.query("UPDATE users SET status='SUSPENDED' WHERE id=$1 AND role='driver'", [driverId]); await pool.query("UPDATE driver_verifications SET verification_status='SUSPENDED' WHERE driver_id=$1", [driverId]); } }
