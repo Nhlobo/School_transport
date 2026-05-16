@@ -9,6 +9,10 @@ export function Navbar() {
         </Link>
         <nav className="hidden items-center gap-5 text-sm font-medium text-slate-600 md:flex">
           <Link href="/" className="hover:text-slate-900">Home</Link>
+          <Link href="/about" className="hover:text-slate-900">About</Link>
+          <Link href="/routes" className="hover:text-slate-900">Routes</Link>
+          <Link href="/pricing" className="hover:text-slate-900">Pricing</Link>
+          <Link href="/contact" className="hover:text-slate-900">Contact</Link>
           <Link href="/tracking" className="hover:text-slate-900">Live Tracking</Link>
           <Link href="/parent-dashboard" className="hover:text-slate-900">Parent Portal</Link>
           <Link href="/driver-dashboard" className="hover:text-slate-900">Driver App</Link>
